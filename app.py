@@ -44,10 +44,9 @@ while serveur_lance:
             # message_recu est de type json
 
             if message_recu["action"] == "disconnect":
-                nb_deconnections += 1
-                # ne rien faire
+                client.close()
 
-            elif message_recu["action"].upper() == "ADD" :
+            elif message_recu["action"] == "add" :
                 for client2 in clients_connectes:
                     # client2 est de type socket
                     client2.send(json.dumps(message_recu))
@@ -55,12 +54,9 @@ while serveur_lance:
             
             """
             Nous ne traitons pas les cas d'erreurs où la valeur de "action"
-            est autre que "disconnect" ou "ADD". Ce cas sera traité plus tard.
+            est autre que "disconnect" ou "add". Ce cas sera traité plus tard.
             """
 
 
 print("Fermeture des connexions")
-for client in clients_connectes:
-    client.close()
-
 connexion.close()
