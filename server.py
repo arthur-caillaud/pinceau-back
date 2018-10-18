@@ -28,9 +28,8 @@ class Server(Thread):
             else:
                 for sending_client in clients:
                     message = json.loads(sending_client.recv(1024))
-                    print(message)
                     if message["action"] == "disconnect":
                         sending_client.close()
                     else:
                         for recipient_client in self.__connected_clients:
-                            recipient_client.send(json.dumps(message))
+                            recipient_client.send(json.dumps(message).encode())
