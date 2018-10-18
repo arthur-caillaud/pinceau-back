@@ -1,27 +1,45 @@
-from flask import Flask, request
-from document import Document
-from flask_socketio import SocketIO, send, emit
+import socket
+import select
 
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app, host='localhost', port=5000)
+hote = ''
+port = 13800
 
-print('App running...')
+connexion = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+connexion.bind((hote,port))
+connexion.listen(100)
+print("Le serveur écoute à présent sur le port {}".format(port))
 
-socketio.run(app)
+serveur_lance = True
+clients_connectes = []
+chaine = '>'
+while serveur_lance:
+    connexions_demandees, ecriture_demandees, socket_erreur = select.select([connexion],[],[],0.05)
 
-def ack():
-    print('Client Connected')
+    for client in connexions_demandees:
+        connexion_avec_client, infos_connexions = connexion.accept()
+        clients_connectes.append(connexion_avec_client)
 
-@socketio.on('connect', namespace='/connect')
-def test_connect():
-    emit('my response', {'data': 'Connected'}, cb=ack)
+    clients_a_lire = []
+    try:
+        clients_a_lire, wlist, xlist, = select.select(clients_connectes, [], [], 0.05)
+    except select.error:
+        pass
 
-# @socketio.on('disconnect', namespace='/connect')
-# def test_disconnect():
-#     print('Client disconnected')
-#
-# @socketio.on('draw', namespace='/draw')
-# def handle_draw(message):
-#     print(message)
-#     send(message)
+    else:
+        for client in clients_a_lire:
+            message_recu = client.recv(1024)
+            message_recu = message_recu.decode()
+
+            if message_recu.upper() == 'STOP':
+                chaine_stop = "STOP"
+                chaine_stop = chaine_stop.encode()
+                client.send(chaine_stop)
+
+            else:
+                chaine += message_recu
+                chaine_a_envoyer = chaine.encode()
+                for client2 in clients_connectes:
+                    client2.send(chaine_a_envoyer)
+
+for client in clients_connectes:
+    client.close()
