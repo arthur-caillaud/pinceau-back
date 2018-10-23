@@ -14,9 +14,9 @@ class Server(Thread):
         self.__connexion.bind((self.__host, self.__port))
         self.__connexion.listen(100)
         self.__db = db('localhost', 'pinceau', 'password')
-        print("Server now listening on port {}".format(self.__port))
 
     def run(self):
+        print("Server now listening on port {}".format(self.__port))
         while True:
             asked_connexions, asked_write, exceptional = select.select([self.__connexion], [], [], 0.05)
             self.handle_asked_connexions(asked_connexions)
