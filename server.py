@@ -3,8 +3,6 @@ from threading import Thread
 import socket
 import select
 import json
-# Internal modules
-from db import DB
 
 class Server(Thread):
     def __init__(self, port=5000):
@@ -12,10 +10,10 @@ class Server(Thread):
         self.__host = ''
         self.__port = port
         self.__connexion = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.__connected_clients = []
         self.__connexion.bind((self.__host, self.__port))
         self.__connexion.listen(100)
-        # self.__db = DB('localhost', 'pinceau', 'password')
+        self.__shapes = []
+        self.__connected_clients = []
 
     def run(self):
         print("Server now listening on port {}".format(self.__port))
@@ -40,22 +38,21 @@ class Server(Thread):
         request = json.loads(sending_client.recv(1024))
         if request['action'] == 'disconnect':
             self.handle_disconnect(sending_client)
-        # if request['action'] == 'connect':
-        #     self.handle_connect(sending_client)
-        else:
+        if request['action'] == 'connect':
+            self.handle_connect(sending_client)
+        if request['action'] == 'add':
             self.transmit_shape(request)
 
     def handle_disconnect(self, sending_client):
         sending_client.close()
 
     def handle_connect(self, sending_client):
-        shapes = self.__db.select_all_shapes()
-        for shape in shapes:
+        for shape in self.__shapes:
             message = json.dumps(shape).encode()
             sending_client.send(message)
 
     def transmit_shape(self, shape):
+        self.__shapes.append(shape)
         for recipient_client in self.__connected_clients:
-            # self.__db.insert_shape(shape)
             message = json.dumps(shape).encode()
             recipient_client.send(message)
