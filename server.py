@@ -12,7 +12,7 @@ class Server(Thread):
         self.__connexion = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__connexion.bind((self.__host, self.__port))
         self.__connexion.listen(100)
-        self.__shapes = []
+        self.__actions = []
         self.__connected_clients = []
 
     def run(self):
@@ -41,19 +41,19 @@ class Server(Thread):
             self.handle_disconnect(sending_client)
         if request['action'] == 'connect':
             self.handle_connect(sending_client)
-        if request['action'] == 'add':
-            self.transmit_shape(sending_client, request)
+        if request['action'] == 'add' or request['action'] == 'erase':
+            self.transmit_action(sending_client, request)
 
     def handle_disconnect(self, sending_client):
         sending_client.close()
 
     def handle_connect(self, sending_client):
-        message = json.dumps(self.__shapes).encode()
+        message = json.dumps(self.__actions).encode()
         sending_client.send(message)
 
-    def transmit_shape(self, sending_client, shape):
-        self.__shapes.append(shape)
+    def transmit_action(self, sending_client, action):
+        self.__actions.append(action)
         for recipient_client in self.__connected_clients:
             if sending_client != recipient_client:
-                message = json.dumps([shape]).encode()
+                message = json.dumps([action]).encode()
                 recipient_client.send(message)
