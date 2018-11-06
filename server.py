@@ -16,7 +16,7 @@ class Server(Thread):
         self.__connected_clients = []
 
     def run(self):
-        print("Server now listening on port {}".format(self.__port))
+        print('Server now listening on port {}'.format(self.__port))
         connexion, connected_clients = self.get_connexion(), self.get_connected_clients()
         while True:
             asked_connexions, asked_write, exceptional = select.select([connexion], [], [], 0.05)
@@ -34,6 +34,7 @@ class Server(Thread):
         connexion, connected_clients = self.get_connexion(), self.get_connected_clients()
         for client in asked_connexions:
             client_connexion, connexion_infos = connexion.accept()
+            print('New client connected.')
             connected_clients.append(client_connexion)
 
     def handle_request(self, sending_client):
