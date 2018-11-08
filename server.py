@@ -23,31 +23,32 @@ class Server(Thread):
             sending_clients = []
             try:
                 sending_clients, wlist, xlist = select.select(self.__connected_clients, [], [], 0.05)
-            except select.error:
-                pass
-            else:
                 for sending_client in sending_clients:
                     self.handle_request(sending_client)
+            except select.error:
+                pass
 
     def handle_asked_connexions(self, asked_connexions):
         for client in asked_connexions:
             client_connexion, connexion_infos = self.__connexion.accept()
-            print('New client connected.')
+            print('New client connected.', connexion_infos)
             self.__connected_clients.append(client_connexion)
 
     def handle_request(self, sending_client):
         request = json.loads(sending_client.recv(1024))
         if request['action'] == 'disconnect':
             self.handle_disconnect(sending_client)
-        if request['action'] == 'connect':
-            self.handle_connect(sending_client)
+        if request['action'] == 'sync':
+            self.handle_sync(sending_client)
         if request['action'] == 'add' or request['action'] == 'erase':
             self.transmit_action(sending_client, request)
 
     def handle_disconnect(self, sending_client):
         sending_client.close()
+        self.__connected_clients.remove(sending_client)
+        print('Client disconnected.')
 
-    def handle_connect(self, sending_client):
+    def handle_sync(self, sending_client):
         message = json.dumps(self.__actions).encode()
         sending_client.send(message)
 
